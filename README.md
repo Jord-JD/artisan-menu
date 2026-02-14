@@ -17,7 +17,7 @@ Use Artisan via an elegant console GUI
 To install, just run the following Composer command from the root of your project.
 
 ```bash
-composer require --dev divineomega/artisan-menu
+composer require --dev jord-jd/artisan-menu
 ```
 
 If you using Larvel 5.4 or below, you may need to add `DivineOmega\ArtisanMenu\Providers\ArtisanMenuServiceProvider::class` to the `providers` array in your `config/app.php` file.

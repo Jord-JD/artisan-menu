@@ -1,6 +1,7 @@
 {
-    "name": "divineomega/artisan-menu",
+    "name": "jord-jd/artisan-menu",
     "description": "Use Artisan via an elegant console GUI",
+    "license": "LGPL-3.0-only",
     "require": {
         "php": ">=7.0",
         "php-school/cli-menu": "^3.0",
@@ -18,6 +19,12 @@
             "providers": [
                 "DivineOmega\\ArtisanMenu\\Providers\\ArtisanMenuServiceProvider"
             ]
+        },
+        "branch-alias": {
+            "dev-master": "2.0-dev"
         }
+    },
+    "replace": {
+        "divineomega/artisan-menu": "self.version"
     }
 }
