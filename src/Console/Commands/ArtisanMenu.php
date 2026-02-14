@@ -1,8 +1,8 @@
 <?php
 
-namespace DivineOmega\ArtisanMenu\Console\Commands;
+namespace JordJD\ArtisanMenu\Console\Commands;
 
-use DivineOmega\JsonKeyValueStore\JsonKeyValueStore;
+use JordJD\JsonKeyValueStore\JsonKeyValueStore;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;

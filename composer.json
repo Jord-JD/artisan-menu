@@ -5,23 +5,23 @@
     "require": {
         "php": ">=7.0",
         "php-school/cli-menu": "^3.0",
-        "divineomega/json-key-value-store": "^1.0",
+        "jord-jd/json-key-value-store": "^4.0",
         "ext-json": "*",
         "laravel/framework": "^5.1||^6.0"
     },
     "autoload": {
         "psr-4": {
-            "DivineOmega\\ArtisanMenu\\": "src/"
+            "JordJD\\ArtisanMenu\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "DivineOmega\\ArtisanMenu\\Providers\\ArtisanMenuServiceProvider"
+                "JordJD\\ArtisanMenu\\Providers\\ArtisanMenuServiceProvider"
             ]
         },
         "branch-alias": {
-            "dev-master": "2.0-dev"
+            "dev-master": "3.0-dev"
         }
     },
     "replace": {

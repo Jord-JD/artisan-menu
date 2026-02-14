@@ -20,7 +20,7 @@ To install, just run the following Composer command from the root of your projec
 composer require --dev jord-jd/artisan-menu
 ```
 
-If you using Larvel 5.4 or below, you may need to add `DivineOmega\ArtisanMenu\Providers\ArtisanMenuServiceProvider::class` to the `providers` array in your `config/app.php` file.
+If you using Larvel 5.4 or below, you may need to add `JordJD\ArtisanMenu\Providers\ArtisanMenuServiceProvider::class` to the `providers` array in your `config/app.php` file.
 
 
 ## Usage

@@ -1,8 +1,8 @@
 <?php
 
-namespace DivineOmega\ArtisanMenu\Providers;
+namespace JordJD\ArtisanMenu\Providers;
 
-use DivineOmega\ArtisanMenu\Console\Commands\ArtisanMenu;
+use JordJD\ArtisanMenu\Console\Commands\ArtisanMenu;
 use Illuminate\Support\ServiceProvider;
 
 class ArtisanMenuServiceProvider extends ServiceProvider
