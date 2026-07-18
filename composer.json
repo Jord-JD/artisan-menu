@@ -3,15 +3,23 @@
     "description": "Use Artisan via an elegant console GUI",
     "license": "LGPL-3.0-only",
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.1",
         "php-school/cli-menu": "^3.0",
         "jord-jd/json-key-value-store": "^4.0",
         "ext-json": "*",
-        "laravel/framework": "^5.1||^6.0"
+        "laravel/framework": "^5.1||^6.0||^7.0||^8.0||^9.0||^10.0||^11.0||^12.0||^13.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5||^9.6||^12.0"
     },
     "autoload": {
         "psr-4": {
             "JordJD\\ArtisanMenu\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JordJD\\ArtisanMenu\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -21,10 +29,18 @@
             ]
         },
         "branch-alias": {
-            "dev-master": "3.0-dev"
+            "dev-master": "4.x-dev"
         }
     },
     "replace": {
         "divineomega/artisan-menu": "self.version"
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": false
+        }
     }
 }

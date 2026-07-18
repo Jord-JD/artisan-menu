@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '7.1'
+            laravel: '5.1.*'
+            composer: 'v2.2'
+          - php: '8.5'
+            laravel: '^13.0'
+            composer: 'latest'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:${{ matrix.composer }}
+          coverage: none
+      - run: composer require laravel/framework:${{ matrix.laravel }} --no-update
+      - run: composer update --prefer-dist --no-interaction
+      - run: vendor/bin/phpunit
