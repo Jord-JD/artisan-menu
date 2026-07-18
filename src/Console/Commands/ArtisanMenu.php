@@ -54,14 +54,14 @@ class ArtisanMenu extends Command
 
         if ($returnCode != 0) {
             $this->error('Error calling `artisan list` command.');
-            exit();
+            return 1;
         }
 
         $response = json_decode(Artisan::output());
 
         if (!$response) {
             $this->error('Error decoding `artisan list` response.');
-            exit();
+            return 1;
         }
 
         $this->app = $response->application;
@@ -76,17 +76,18 @@ class ArtisanMenu extends Command
         $gitIgnorePath = storage_path('.gitignore');
 
         if (file_exists($gitIgnorePath)) {
-            $gitIgnore = file_get_contents($gitIgnorePath);
+            $contents = file_get_contents($gitIgnorePath);
+            $gitIgnore = $contents === false ? '' : $contents;
         }
 
-        if (!str_contains($gitIgnore, $storeFile)) {
-            $gitIgnore .= PHP_EOL.$storeFile;
-            $gitIgnore = trim($gitIgnore);
+        if (strpos($gitIgnore, $storeFile) === false) {
+            $gitIgnore = rtrim($gitIgnore).PHP_EOL.$storeFile.PHP_EOL;
             file_put_contents($gitIgnorePath, $gitIgnore);
         }
 
         $this->mainMenu();
 
+        return 0;
     }
 
     private function mainMenu()
@@ -171,9 +172,9 @@ class ArtisanMenu extends Command
         return $this->commands->where('name', $commandName)->first();
     }
 
-    private function addCommandMenuItem(CliMenuBuilder $menu, \stdClass $command)
+    private function addCommandMenuItem(CliMenuBuilder $menu, \stdClass $command = null)
     {
-        if (in_array($command->name, ['list', 'help', 'inspire', 'optimize', 'menu'])) {
+        if (!$command || in_array($command->name, ['list', 'help', 'inspire', 'optimize', 'menu'])) {
             return;
         }
 
@@ -184,43 +185,17 @@ class ArtisanMenu extends Command
 
     private function commandSelected(CliMenu $menu, \stdClass $command)
     {
-        $recentCommands = $this->store->get('recent_commands');
-
-        if (!is_array($recentCommands)) {
-            $recentCommands = [];
-        }
-
-        $key = array_search($command->name, $recentCommands);
-
-        if ($key !== false) {
-            unset($recentCommands[$key]);
-        }
-
-        array_unshift($recentCommands, $command->name);
-
-        while(count($recentCommands) > 5) {
-            array_pop($recentCommands);
-        }
-
-        $this->store->set('recent_commands', $recentCommands);
-
-
         $menuStyle = new MenuStyle();
         $menuStyle->setBg('white');
         $menuStyle->setFg('black');
 
-        $arguments = [];
+        $arguments = $this->collectCommandInput($menu, $menuStyle, $command);
 
-        foreach($command->definition->arguments as $argument) {
-            if ($argument->is_required) {
-
-                $result = $menu->askText($menuStyle)
-                    ->setPromptText('Please enter '.lcfirst($argument->description ? $argument->description : $argument->name))
-                    ->ask();
-
-                $arguments[$argument->name] = $result->fetch();
-            }
+        if ($arguments === null) {
+            return;
         }
+
+        $this->rememberCommand($command->name);
 
         try {
             Artisan::call($command->name, $arguments);
@@ -253,7 +228,129 @@ class ArtisanMenu extends Command
         $menu->close();
 
         $this->mainMenu();
+    }
 
+    private function collectCommandInput(CliMenu $menu, MenuStyle $menuStyle, \stdClass $command)
+    {
+        $arguments = [];
 
+        foreach ($command->definition->arguments as $argument) {
+            $required = !empty($argument->is_required);
+            $question = $menu->askText($menuStyle)
+                ->setPromptText(
+                    ($required ? 'Required' : 'Optional').' argument '.$argument->name
+                    .($argument->description ? ': '.lcfirst($argument->description) : '')
+                );
+
+            if (!$required) {
+                $question->setValidator(function () {
+                    return true;
+                });
+            }
+
+            $value = $question->ask()->fetch();
+
+            if ($required && $value === '') {
+                return null;
+            }
+
+            if ($value !== '') {
+                $arguments[$argument->name] = $this->normaliseDefinitionValue($argument, $value);
+            }
+        }
+
+        foreach ($this->getCommandSpecificOptions($command) as $option) {
+            $key = '--'.$option->name;
+
+            if (empty($option->accept_value)) {
+                $value = $menu->askText($menuStyle)
+                    ->setPromptText('Enable '.$key.'? Enter yes or leave blank')
+                    ->setValidationFailedText('Enter yes, no, or leave blank')
+                    ->setValidator(function ($input) {
+                        return $input === '' || in_array(strtolower($input), ['y', 'yes', 'n', 'no']);
+                    })
+                    ->ask()
+                    ->fetch();
+
+                if ($this->isAffirmative($value)) {
+                    $arguments[$key] = true;
+                }
+
+                continue;
+            }
+
+            $value = $menu->askText($menuStyle)
+                ->setPromptText(
+                    'Optional '.$key
+                    .($option->description ? ': '.lcfirst($option->description) : '')
+                )
+                ->setValidator(function () {
+                    return true;
+                })
+                ->ask()
+                ->fetch();
+
+            if ($value !== '') {
+                $arguments[$key] = $this->normaliseDefinitionValue($option, $value);
+            }
+        }
+
+        return $arguments;
+    }
+
+    protected function getCommandSpecificOptions(\stdClass $command)
+    {
+        $globalOptions = [
+            'help',
+            'quiet',
+            'silent',
+            'verbose',
+            'version',
+            'ansi',
+            'no-ansi',
+            'no-interaction',
+            'env',
+        ];
+
+        return array_values(array_filter($command->definition->options, function ($option) use ($globalOptions) {
+            return !in_array($option->name, $globalOptions);
+        }));
+    }
+
+    protected function normaliseDefinitionValue(\stdClass $definition, $value)
+    {
+        if (!empty($definition->is_array) || !empty($definition->is_multiple)) {
+            return array_values(array_filter(array_map('trim', explode(',', $value)), 'strlen'));
+        }
+
+        return $value;
+    }
+
+    protected function isAffirmative($value)
+    {
+        return in_array(strtolower(trim($value)), ['y', 'yes']);
+    }
+
+    private function rememberCommand($commandName)
+    {
+        $recentCommands = $this->store->get('recent_commands');
+
+        if (!is_array($recentCommands)) {
+            $recentCommands = [];
+        }
+
+        $key = array_search($commandName, $recentCommands);
+
+        if ($key !== false) {
+            unset($recentCommands[$key]);
+        }
+
+        array_unshift($recentCommands, $commandName);
+
+        while (count($recentCommands) > 5) {
+            array_pop($recentCommands);
+        }
+
+        $this->store->set('recent_commands', $recentCommands);
     }
 }
